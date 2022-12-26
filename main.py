@@ -73,19 +73,32 @@ class Yt_Audio(MDApp):
 
 
     def get_path(self):
-        login_name = os.getlogin()
-        print(login_name)
-        current_path = os.getcwd()
-        print(current_path)
-        without_local = current_path.split("\\")
-        new_local = os.path.join(without_local[0],  without_local[1],  without_local[2],  "Youtube_musik")
-        print(without_local)
-        print(new_local)
+        curr_path = os.getcwd()
+        print(curr_path)
+        tree = curr_path.split("\\")
+        if tree[0] == "":
+            tree = tree[1:]
+        print(tree)
+        load_location = " ".join(tree[:-2]).replace(" ", "\\")
+        print(load_location)
+        name = "\\Youtube_Musik"
+        os.chdir(load_location)
+        path = load_location + name
         try:
-            os.mkdir(new_local)
-        except:
-            pass
-        return new_local, current_path
+            if not os.path.lexists(path):
+                os.mkdir(f"{path}")
+        except OSError as errstr:
+            print(f"Can't creat directory \n{errstr}")
+        return path
+
+    def find_file(self, filename):
+        c_path = os.getcwd()
+        for i in os.scandir(c_path):
+            if i.is_file():
+                if filename in i.name:
+                    file = i.path
+                    break
+        return file
 
     def grab_audio(self):
         video_url = self.root.ids.inp.text
@@ -101,8 +114,8 @@ class Yt_Audio(MDApp):
         with youtube_dl.YoutubeDL(options) as ydl:
             ydl.download([video_info['webpage_url']])
 
-        first = os.path.join(self.get_path()[1], filename)
-        second = os.path.join(self.get_path()[0], filename)
+        first = self.find_file(filename)
+        second = self.get_path()+f"\\{filename}"
         print("******************")
         print(first)
         print(second)
@@ -110,12 +123,10 @@ class Yt_Audio(MDApp):
 
         try:
             os.replace(first, second)
-            shutil.copyfile(first, second)
-
         except:
-            pass
+            print("Can't load audio file on this device.")
 
-        os.chdir(self.get_path()[1])
+        #os.chdir(self.get_path()[1])
 
 
         self.root.ids.label.text = "Audiofile Downloaded Succesfulll!!!"
